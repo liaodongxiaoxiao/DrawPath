@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="com.ldxx.drawpath.MainActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        tools:layout_editor_absoluteX="8dp"
+        tools:layout_editor_absoluteY="0dp">
+
+        <EditText
+            android:id="@+id/ed_x"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="2"
+            android:hint="x 坐标"
+            android:inputType="numberDecimal"/>
+
+        <EditText
+            android:id="@+id/ed_y"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="2"
+            android:hint="x 坐标"
+            android:inputType="numberDecimal"/>
+
+        <Button
+            android:id="@+id/btn_add"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="addPoint"
+            android:text="add"/>
+    </LinearLayout>
+
+    <com.ldxx.drawpath.ZoomableView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <com.ldxx.drawpath.GPSPathView
+            android:id="@+id/path"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+    </com.ldxx.drawpath.ZoomableView>
+
+</LinearLayout>
