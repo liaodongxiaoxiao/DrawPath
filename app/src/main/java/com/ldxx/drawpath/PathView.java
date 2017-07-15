@@ -44,9 +44,22 @@ public class PathView extends View {
         super.onDraw(canvas);
         int width = getWidth();
         int height = getHeight();
-
+        /*canvas.drawColor(Color.RED);
+        canvas.translate(200, 500);
         //Rect r = new Rect();
-        Log.e(TAG, "Rect x:" + width/2 + " y:" + height/2);
-        canvas.drawCircle(width/2, height/2,10, paint);
+        Log.e(TAG, "Rect x:" + width / 2 + " y:" + height / 2);
+        canvas.drawCircle(width / 2, height / 2, 10, paint);*/
+        paint.setColor(Color.BLACK);
+
+        canvas.drawCircle(0,0,100,paint);
+        canvas.translate(200,200);
+
+// 在坐标原点绘制一个蓝色圆形
+        paint.setColor(Color.BLUE);
+
+        canvas.drawCircle(0,0,100,paint);
+        canvas.translate(200,200);
+        //canvas.save();
+
     }
 }

@@ -66,6 +66,15 @@ public class GPSPathView extends View {
         pointPaint.setColor(Color.BLUE);
         pointPaint.setStyle(Paint.Style.FILL);
         pointPaint.setStrokeWidth(4);
+        paint = new Paint();
+        paint.setColor(Color.RED);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(3);
+
+        pointPaint = new Paint();
+        pointPaint.setColor(Color.BLUE);
+        pointPaint.setStyle(Paint.Style.FILL);
+        pointPaint.setStrokeWidth(4);
     }
 
     public void clear() {
@@ -76,46 +85,34 @@ public class GPSPathView extends View {
     private class GVOnBoundsChangeListener implements LatLngBounds.OnBoundsChangeListener {
         @Override
         public void onSouthWestXChanged(int oldX, int newX) {
-            Log.e(TAG, "onSouthWestXChanged oldX:" + oldX + " newX:" + newX);
-            Log.e(TAG, "onSouthWestXChanged: " + (oldX - newX));
-            Log.e(TAG, "onSouthWestXChanged: "+((oldX-newX)*1f/((oldX-newX)+centerX)));
+
             //xV = (int) (xV*((oldX-newX)*1f/((oldX-newX)+centerX)));
-            scaleX = 1- ((xV-newX)*1f/((xV-newX)+centerX));
+            scaleX = 1 - ((xV - newX) * 1f / ((xV - newX) + centerX));
             //xV = xV - (oldX - newX);
             //Log.e(TAG, "xV: " + xV + " yV:" + yV);
         }
 
         @Override
         public void onSouthWestYChanged(int oldY, int newY) {
-            Log.e(TAG, "onSouthWestYChanged  oldY:" + oldY + " newY:" + newY);
-            Log.e(TAG, "onSouthWestYChanged: " + (newY - oldY));
-            //yV = (int) (yV*((newY-oldY)*1f/((newY-oldY)+getHeight())));
-            Log.e(TAG, "onSouthWestYChanged: "+ (newY-oldY)*1f/((newY-oldY)+getHeight()));
-            //yV = yV + (newY - oldY);
-            scaleY = 1-(newY-yV)*1f/((newY-yV)+centerY);
+
+            scaleY = 1 - (newY - yV) * 1f / ((newY - yV) + centerY);
             //Log.e(TAG, "xV: " + xV + " yV:" + yV);
         }
 
         @Override
         public void onNorthEastXChanged(int oldX, int newX) {
-            Log.e(TAG, "onNorthEastXChanged  oldX:" + oldX + " newX:" + newX);
-            Log.e(TAG, "onNorthEastXChanged: " + (newX - oldX));
-            Log.e(TAG, "onNorthEastXChanged: "+(newX-oldX)*1f/(newX-oldX+getWidth()));
             //xV = (int) (xV*((newX-oldX)*1f/(newX-oldX+getWidth())));
             //xV = xV + (newX - oldX);
             //Log.e(TAG, "xV: " + xV + " yV:" + yV);
-            scaleX = 1-(newX-xV)*1f/(newX-xV+centerX);
+            scaleX = 1 - (newX - xV) * 1f / (newX - xV + centerX);
         }
 
         @Override
         public void onNorthEastYChanged(int oldY, int newY) {
-            Log.e(TAG, "onNorthEastYChanged  oldY:" + oldY + " newY:" + newY);
-            Log.e(TAG, "onNorthEastYChanged: " + (oldY - newY));
-            Log.e(TAG, "onNorthEastYChanged: "+(oldY-newY)*1f/((oldY-newY)+centerY));
             //yV = (int) (yV*((oldY-newY)*1f/((oldY-newY)+centerY)));
             //yV = yV + (oldY - newY);
             //Log.e(TAG, "xV: " + xV + " yV:" + yV);
-            scaleY = (yV-newY)*1f/((yV-newY)+centerY);
+            scaleY = (yV - newY) * 1f / ((yV - newY) + centerY);
         }
     }
 
@@ -127,7 +124,7 @@ public class GPSPathView extends View {
         super.onDraw(canvas);
 
         canvas.drawColor(Color.YELLOW);
-        canvas.drawCircle(0,0,20,pointPaint);
+        canvas.drawCircle(0, 0, 20, pointPaint);
         int width = getWidth();
         int height = getHeight();
         centerX = width / 2;
@@ -149,7 +146,7 @@ public class GPSPathView extends View {
         for (int i = 0; i < ps.size(); i++) {
             Log.e(TAG, "center(" + centerX + "," + centerY + ") point( " + ps.get(i).x + "," + ps
                     .get(i).y + ")");
-            p = new Point((int) ((ps.get(i).x - xV + centerX)*scaleX), (int) ((ps.get(i).y - yV + centerY)*scaleY));
+            p = new Point((int) ((ps.get(i).x - xV + centerX) * scaleX), (int) ((ps.get(i).y - yV + centerY) * scaleY));
             Log.e(TAG, "onDraw p.x" + p.x + " p.y" + p.y);
             path.lineTo(p.x, p.y);
         }
@@ -193,12 +190,12 @@ public class GPSPathView extends View {
     }
 
     private void drawPoint(Canvas canvas, Point point) {
-        canvas.drawCircle((int) ((point.x - xV + centerX)*scaleX), (int) ((point.y - yV + centerY)*scaleY), 10, pointPaint);
-        int x = (int) ((point.x-myLocation.x)*scaleX);
-        int y = (int) ((point.y-myLocation.y)*scaleY);
-        if(x<centerX&&y<centerY){
-            canvas.translate(centerX-x,centerY-y);
-            Log.e(TAG, "drawPoint: "+(centerX-x)+" "+(centerY-y) );
+        canvas.drawCircle((int) ((point.x - xV + centerX) * scaleX), (int) ((point.y - yV + centerY) * scaleY), 10, pointPaint);
+        int x = (int) ((point.x - myLocation.x) * scaleX);
+        int y = (int) ((point.y - myLocation.y) * scaleY);
+        if (x < centerX && y < centerY) {
+            canvas.translate(centerX - x, centerY - y);
+            Log.e(TAG, "drawPoint: " + (centerX - x) + " " + (centerY - y));
         }
         //canvas.translate((int)(centerX-((point.x-myLocation.x)*scaleX)),(int)(centerY-((point.y-myLocation.y)*scaleY)));
         //Log.e(TAG, "drawPoint: "++" "+(point.y-myLocation.y)*scaleY );

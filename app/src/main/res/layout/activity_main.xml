@@ -11,9 +11,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        tools:layout_editor_absoluteX="8dp"
-        tools:layout_editor_absoluteY="0dp">
+        android:orientation="horizontal">
 
         <EditText
             android:id="@+id/ed_x"
@@ -44,7 +42,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <com.ldxx.drawpath.GPSPathView
+        <com.ldxx.drawpath.GPathView
             android:id="@+id/path"
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>

@@ -1,6 +1,7 @@
 package com.ldxx.drawpath;
 
 import android.graphics.Point;
+import android.graphics.Rect;
 
 
 /**
@@ -10,6 +11,17 @@ public final class LatLngBounds {
 
     public final Point southwest;
     public final Point northeast;
+
+    public Rect getRect() {
+        //left, int top, int right, int bottom
+        return new Rect(southwest.x, northeast.y, northeast.x, southwest.y);
+    }
+
+    public Rect getRect(int padding) {
+        return new Rect(southwest.x - padding, northeast.y - padding,
+                northeast.x + padding, southwest.y + padding);
+
+    }
 
     public interface OnBoundsChangeListener {
         void onSouthWestXChanged(int oldX, int newX);
@@ -81,6 +93,7 @@ public final class LatLngBounds {
         }
 
         if (point.x < southwest.x) {
+
             if (onBoundsChangeListener != null) {
                 onBoundsChangeListener.onSouthWestXChanged(southwest.x, point.x);
             }
@@ -129,5 +142,13 @@ public final class LatLngBounds {
 
     public int getBoundsHeight() {
         return (southwest.y - northeast.y) > 0 ? (southwest.y - northeast.y) : 0;
+    }
+
+    public int getCenterX() {
+        return southwest.x + getBoundsWidth() / 2;
+    }
+
+    public int getCenterY() {
+        return northeast.y + getBoundsHeight() / 2;
     }
 }
