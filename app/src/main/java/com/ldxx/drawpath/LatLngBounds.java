@@ -2,15 +2,22 @@ package com.ldxx.drawpath;
 
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.util.Log;
 
 
 /**
  * 代表了经纬度划分的一个矩形区域
  */
 public final class LatLngBounds {
+    private static final String TAG = "LatLngBounds";
 
     public final Point southwest;
     public final Point northeast;
+
+    public LatLngBounds(int left, int top, int right, int bottom) {
+        southwest = new Point(left, bottom);
+        northeast = new Point(right, top);
+    }
 
     public Rect getRect() {
         //left, int top, int right, int bottom
@@ -21,6 +28,39 @@ public final class LatLngBounds {
         return new Rect(southwest.x - padding, northeast.y - padding,
                 northeast.x + padding, southwest.y + padding);
 
+    }
+
+    public LatLngBounds change(int padding) {
+        int left = southwest.x;
+        int top = northeast.y;
+        int right = northeast.x;
+        int bottom = southwest.y;
+        if (left < 0) {
+            left = -left + padding;
+            right = right + left;
+        }else{
+            if(left<padding){
+                left = left+(padding-left);
+                right = right+left;
+            }
+        }
+
+        if (top < 0) {
+            top = -top + padding;
+            bottom = bottom + top;
+        }else {
+            if(top<padding){
+                top = top+(padding-top);
+                bottom = bottom+top;
+            }
+        }
+        return new LatLngBounds(left, top, right, bottom);
+
+        /*if(southwest.x<0){
+            southwest.x = -southwest.x+padding;
+            northeast.x = northeast.x +(-southwest.x);
+        }
+        if ()*/
     }
 
     public interface OnBoundsChangeListener {
@@ -63,11 +103,12 @@ public final class LatLngBounds {
      * @return true 矩形包含这个点;false 矩形未包含这个点
      */
     public boolean contains(LatLngBounds point) {
+        Log.e(TAG, "contains this: " + this + " child:" + point);
         boolean bool = false;
         if (point == null) {
-            return bool;
+            return false;
         }
-        if ((contains(point.southwest)) && (contains(point.northeast))) {
+        if (contains(point.southwest) && contains(point.northeast)) {
             bool = true;
         }
         return bool;
@@ -93,34 +134,33 @@ public final class LatLngBounds {
         }
 
         if (point.x < southwest.x) {
-
+            southwest.x = point.x;
             if (onBoundsChangeListener != null) {
                 onBoundsChangeListener.onSouthWestXChanged(southwest.x, point.x);
             }
-            southwest.x = point.x;
+
         }
         if (point.x > northeast.x) {
-
+            northeast.x = point.x;
             if (onBoundsChangeListener != null) {
                 onBoundsChangeListener.onNorthEastXChanged(northeast.x, point.x);
             }
-            northeast.x = point.x;
+
         }
 
         if (point.y < northeast.y) {
-
+            northeast.y = point.y;
             if (onBoundsChangeListener != null) {
                 onBoundsChangeListener.onNorthEastYChanged(northeast.y, point.y);
             }
-            northeast.y = point.y;
+
         }
 
         if (point.y > southwest.y) {
-
+            southwest.y = point.y;
             if (onBoundsChangeListener != null) {
                 onBoundsChangeListener.onSouthWestYChanged(southwest.y, point.y);
             }
-            southwest.y = point.y;
         }
     }
 
@@ -150,5 +190,13 @@ public final class LatLngBounds {
 
     public int getCenterY() {
         return northeast.y + getBoundsHeight() / 2;
+    }
+
+    public LatLngBounds scaleBounds(double scale) {
+        if (scale == 0) {
+            return this;
+        }
+        return new LatLngBounds(new Point((int) (southwest.x * scale), (int) (southwest.y * scale)),
+                new Point((int) (northeast.x * scale), (int) (northeast.y * scale)));
     }
 }

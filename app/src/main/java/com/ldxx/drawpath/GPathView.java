@@ -3,16 +3,19 @@ package com.ldxx.drawpath;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
-import android.graphics.Region;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,8 +28,11 @@ public class GPathView extends View {
     private static final String TAG = "GPathView";
     private Paint pathPaint;
     private Paint pointPaint;
+    private Paint boundPaint;
 
     private Paint bgPaint;
+    private PorterDuffXfermode duffXfermode;
+    private Paint clearPaint = new Paint();
 
     private List<Point> points = new ArrayList<>();
 
@@ -35,7 +41,11 @@ public class GPathView extends View {
     int centerX = 0;
     int centerY = 0;
 
-    private LatLngBounds bounds;
+    boolean needScale = false;
+
+    //private LatLngBounds bounds;
+    private LatLngBounds pBounds;
+    private LatLngBounds defaultBounds;
 
 
     public GPathView(Context context) {
@@ -66,11 +76,24 @@ public class GPathView extends View {
         bgPaint = new Paint();
         bgPaint.setColor(Color.YELLOW);
         pointPaint.setStyle(Paint.Style.FILL);
+
+        DashPathEffect pathEffect = new DashPathEffect(new float[]{2, 3}, 2);
+        boundPaint = new Paint();
+        //boundPaint.reset();
+        boundPaint.setStyle(Paint.Style.STROKE);
+        boundPaint.setStrokeWidth(10);
+        boundPaint.setColor(Color.WHITE);
+        boundPaint.setAntiAlias(true);
+        boundPaint.setPathEffect(pathEffect);
+
+        duffXfermode = new PorterDuffXfermode(PorterDuff.Mode.CLEAR);
     }
 
 
     int xV;
     int yV;
+    int x0;
+    int y0;
     Canvas canvas;
 
     @Override
@@ -82,166 +105,199 @@ public class GPathView extends View {
 
         int right = getRight() - PADDING > getLeft() ? getRight() - PADDING : getRight();
         int top = getTop() + PADDING < getBottom() ? getTop() + PADDING : getTop();
-
-        canvas.drawRect(left, top, right, bottom, bgPaint);
+        if (defaultBounds == null) {
+            defaultBounds = new LatLngBounds(new Point(left, bottom), new Point(right, top));
+            Log.i(TAG, "onDraw default bounds: " + defaultBounds.toString());
+        }
 
         int width = getWidth();
         int height = getHeight();
         centerX = width / 2;
         centerY = height / 2;
+        //清屏
+        clearPaint.setXfermode(duffXfermode);
+        canvas.drawPaint(clearPaint);
+        //mPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC));
 
-
-        if (points.isEmpty()) {
+        canvas.drawRect(left, top, right, bottom, bgPaint);
+        //canvas.drawColor(Color.YELLOW);
+        if (points.isEmpty() || points.size() == 1) {
             canvas.drawCircle(centerX, centerY, 10, pointPaint);
         } else {
-            Point pointEnd = points.get(points.size() - 1);
+            Point pointEnd = points.get(0);
+            x0 = pointEnd.x;
+            y0 = pointEnd.y;
             xV = pointEnd.x - centerX;
             yV = pointEnd.y - centerY;
 
+
             if (points.size() > 1) {
                 Path path = new Path();
-                Log.e(TAG, "onDraw: ba la ba la ba la~");
-                LatLngBounds pBounds = new LatLngBounds(new Point(centerX - PADDING, 2 * centerY)
-                        , new Point(2 * centerX, centerY - PADDING));
-                path.moveTo(centerX, centerY);
+                //Log.i(TAG, "onDraw: ba la ba la ba la~");
+                Point start = getPoint(pointEnd);
+                Log.e(TAG, "Point: 0 " + start.x + " " + start.y);
+                path.moveTo(start.x, start.y);
                 Point p;
-                for (int i = 0; i < points.size() - 1; i++) {
+                for (int i = 1; i < points.size(); i++) {
                     p = getPoint(points.get(i));
+                    Log.e(TAG, "Point: " + i + " " + p.x + " " + p.y);
                     if (!pBounds.contains(p)) {
                         pBounds.including(p);
                     }
                     path.lineTo(p.x, p.y);
                 }
 
-                //Rect newRect = canvas.getClipBounds();
-                //newRect.inset(p.x, p.y); //make the rect larger
-                //Log.e(TAG, "onDraw: " +newRect );
-                canvas.clipRect(pBounds.getRect(), Region.Op.REPLACE);
+                Rect rect = pBounds.getRect();
+                canvas.drawRect(rect, boundPaint);
 
-                Log.e(TAG, "onDraw p bound: " + pBounds);
+
                 if (pBounds.northeast.y < 0) {
-                    canvas.translate(0, -pBounds.northeast.y);
-                } else if (pBounds.southwest.x < 0) {
-                    canvas.translate(-pBounds.southwest.x, 0);
+                    //Log.i(TAG, "onDraw northeast.y: " + (pBounds.northeast.y));
+                    canvas.translate(0, -pBounds.northeast.y + PADDING);
                 }
+                if (pBounds.southwest.x < 0) {
+                    //Log.i(TAG, "onDraw southwest.x: " + (pBounds.southwest.x));
+                    canvas.translate(-pBounds.southwest.x + PADDING, 0);
+                }
+
                 canvas.drawPath(path, pathPaint);
             }
-            Point e = getPoint(pointEnd);
+            Point e = getPoint(points.get(points.size() - 1));
             canvas.drawCircle(e.x, e.y, 10, pointPaint);
         }
     }
 
+    public int getCenterX() {
+        return centerX;
+    }
+
+    public int getCenterY() {
+        return centerY;
+    }
+
+    public Point getLastPoint() {
+        if (points != null && !points.isEmpty()) {
+            return points.get(points.size() - 1);
+        }
+        return null;
+    }
+
     private Point getPoint(Point point) {
+        /*Log.i(TAG, "getPoint xv: " + xV + " yV:" + yV + " point x:" + point.x + " point y:"
+                + point.y + " point0 x" + x0 + " point0 y" + y0);*/
         int x;
         int y;
-        if (point.x <= xV && point.x <= yV) {
-            x = xV - point.x;
-            y = yV - point.y;
-        } else if (point.x > xV && point.y <= yV) {
+
+        /*if (point.x < x0 && point.y < y0) {
             x = point.x - xV;
-            y = yV - point.y;
-        } else if (point.x > xV && point.y > yV) {
+            y = point.y - yV;
+        } else if (point.x >= x0 && point.y < y0) {
+            x = point.x - xV;
+            y = point.y - yV;
+        } else if (point.x >= x0 && point.y >= y0) {
             x = point.x - xV;
             y = point.y - yV;
         } else {
-            x = xV - point.x;
+            x = point.x - xV;
             y = point.y - yV;
-        }
-        //Log.e(TAG, "getPoint: " + x + " " + y);
-        return new Point((int) (x * scale), (int) (y * scale));
+        }*/
+        x = point.x - xV;
+        y = point.y - yV;
+        Log.e(TAG, "getPoint: " + x + " " + y);
+        return new Point((int) (x * scale.doubleValue()), (int) (y * scale.doubleValue()));
+        //return new Point(x, y);
         //return point;
     }
 
     public void addPoint(Point point) {
-        Log.e(TAG, "addPoint x:" + point.x + " y:" + point.y);
+        //Log.i(TAG, "addPoint x:" + point.x + " y:" + point.y);
         points.add(point);
-        if (bounds == null) {
-            initBounds(point);
-        }
-        if (!bounds.contains(point)) {
-            bounds.including(point);
+        if (pBounds == null) {
+            initBounds();
         }
         invalidate();
     }
 
-    private void initBounds(Point point) {
-        bounds = new LatLngBounds(new Point(point.x - 1000, point.y + 100),
-                new Point(point.x + 1000, point.y - 1000));
-        bounds.setOnBoundsChangeListener(new BondChangeListener(canvas));
+    private void initBounds() {
+
+        pBounds = new LatLngBounds(new Point(centerX, centerY)
+                , new Point(centerX, centerY));
+        pBounds.setOnBoundsChangeListener(new BondChangeListener());
     }
 
-    private double scale = 1d;
+    private BigDecimal scale = new BigDecimal(1d);
 
     private class BondChangeListener implements LatLngBounds.OnBoundsChangeListener {
 
-        private Canvas canvas;
-
-        public BondChangeListener(Canvas canvas) {
-            this.canvas = canvas;
-        }
-
         @Override
         public void onSouthWestXChanged(int oldX, int newX) {
-            int change = (oldX - newX);
-
-            /*Rect newRect = canvas.getClipBounds();
-            //make the rect larger
-            newRect.inset(newX, bounds.southwest.y);
-            canvas.clipRect(newRect, Region.Op.REPLACE);*/
-            Log.e(TAG, "onSouthWestXChanged: " + change);
-            double s = 1 - change * 1d / (change + centerX);
-            initScale(s);
+            Log.i(TAG, "onSouthWestXChanged: ");
+            calculationScale();
+            invalidate();
         }
 
         @Override
         public void onSouthWestYChanged(int oldY, int newY) {
-            int change = (newY - oldY);
-            Log.e(TAG, "onSouthWestYChanged: " + change);
-            double s = 1 - change * 1d / (change + centerY);
-            initScale(s);
-           /* Rect newRect = canvas.getClipBounds();
-            //make the rect larger
-            newRect.inset(bounds.southwest.x, newY);
-            canvas.clipRect(newRect, Region.Op.REPLACE);*/
+            Log.i(TAG, "onSouthWestYChanged: ");
+            calculationScale();
+            invalidate();
         }
 
 
         @Override
         public void onNorthEastXChanged(int oldX, int newX) {
-            /*Rect newRect = canvas.getClipBounds();
-            //make the rect larger
-            newRect.inset(bounds.northeast.x + (newX - oldX), bounds.northeast.y);
-            canvas.clipRect(newRect, Region.Op.REPLACE);*/
-            int change = (newX - oldX);
-            Log.e(TAG, "onNorthEastXChanged: " + change);
-            double s = 1 - change * 1d / (change + centerX);
-            initScale(s);
+            Log.i(TAG, "onNorthEastXChanged: ");
+            calculationScale();
+            invalidate();
         }
 
         @Override
         public void onNorthEastYChanged(int oldY, int newY) {
-            /*Rect newRect = canvas.getClipBounds();
-            //make the rect larger
-            newRect.inset(bounds.northeast.x, newY);
-            canvas.clipRect(newRect, Region.Op.REPLACE);*/
-            int change = (oldY - newY);
-            Log.e(TAG, "onNorthEastYChanged: " + change);
-            double s = 1 - change * 1d / (change + centerY);
-            initScale(s);
+            Log.i(TAG, "onNorthEastYChanged: ");
+            calculationScale();
+            invalidate();
         }
 
     }
 
-    private void initScale(double s) {
-        if (s == 0) {
+    private void calculationScale() {
+        LatLngBounds temp = pBounds.change(PADDING);
+        //|| defaultBounds.contains(pBounds.scaleBounds(scale))
+        if (defaultBounds.contains(temp)) {
             return;
         }
-        if (scale == 1d) {
-            scale = s;
-        } else {
-            scale = Math.min(scale, s);
+        //LatLngBounds temp = pBounds.change(PADDING);
+        Log.i(TAG, "calculationScale defaultBounds: " + defaultBounds);
+        Log.i(TAG, "calculationScale pBounds: " + pBounds);
+        Log.i(TAG, "calculationScale temp: " + temp);
+        Log.i(TAG, "calculationScale scale before: " + scale.doubleValue());
+
+        if (defaultBounds.contains(temp.scaleBounds(scale.doubleValue()))) {
+            //pBounds = pBounds.scaleBounds(scale.doubleValue());
+            //pBounds.setOnBoundsChangeListener(new BondChangeListener());
+            return;
         }
-        //scale = scale ;
-        Log.e(TAG, "initScale: " + scale);
+        scale = scale.subtract(new BigDecimal(0.005d));
+        while (!defaultBounds.contains(temp.change(PADDING).scaleBounds(scale.doubleValue()))) {
+            scale = scale.subtract(new BigDecimal(0.005d));
+            Log.i(TAG, "calculationScale scale after: " + scale.doubleValue());
+            if (scale.doubleValue() <= 0) {
+                break;
+            }
+            needScale = true;
+            //Log.i(TAG, " do calculationScale: " + scale);
+        }
+
+        //pBounds = pBounds.scaleBounds(scale);
+        //Log.i(TAG, "calculationScale: " + scale);
+        //float scaleF = scale.setScale(3, BigDecimal.ROUND_HALF_UP).floatValue();
+        /*if (canvas != null && scaleF > 0) {
+            canvas.scale(scaleF, scaleF, centerX, centerY);
+        }*/
+        Log.i(TAG, "calculationScale --: " + scale.setScale(3, BigDecimal.ROUND_HALF_UP).doubleValue());
+        //pBounds = pBounds.scaleBounds(scale.doubleValue());
+        //pBounds.setOnBoundsChangeListener(new BondChangeListener());
     }
+
+
 }
