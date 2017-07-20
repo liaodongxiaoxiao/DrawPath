@@ -273,8 +273,8 @@ public class GPathView extends View {
         Log.i(TAG, "calculationScale scale before: " + scale.doubleValue());
 
         if (defaultBounds.contains(temp.scaleBounds(scale.doubleValue()))) {
-            //pBounds = pBounds.scaleBounds(scale.doubleValue());
-            //pBounds.setOnBoundsChangeListener(new BondChangeListener());
+            pBounds = pBounds.scaleBounds(scale.doubleValue());
+            pBounds.setOnBoundsChangeListener(new BondChangeListener());
             return;
         }
         scale = scale.subtract(new BigDecimal(0.005d));
@@ -295,8 +295,8 @@ public class GPathView extends View {
             canvas.scale(scaleF, scaleF, centerX, centerY);
         }*/
         Log.i(TAG, "calculationScale --: " + scale.setScale(3, BigDecimal.ROUND_HALF_UP).doubleValue());
-        //pBounds = pBounds.scaleBounds(scale.doubleValue());
-        //pBounds.setOnBoundsChangeListener(new BondChangeListener());
+        pBounds = pBounds.scaleBounds(scale.doubleValue());
+        pBounds.setOnBoundsChangeListener(new BondChangeListener());
     }
 
 
